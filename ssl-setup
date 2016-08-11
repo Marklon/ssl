@@ -1,0 +1,97 @@
+1. Install / Enable SSL
+2. Enable SSL with a passphrase
+3. Disable the RC4 ciphers
+4. Find a command line utility that will enable you from your minion to connect to your master to verify the ciphers that you have disabled have actually been disabled 
+5. Create a certificate in D.E.R format and try to make it work. Then convert the certificate back to PEM
+6. Once the certificate is back in PEM format take the certificate NOT The private key and install it into the 
+  certificate key store for your computer
+7. Then using safari visit the page for the web server and ensure that you DON'T get a certificate warning
+8. Create a pkcs12 bundle for someone else and distribute it to them
+9. Have them change their servername to match your certificate and ensure that you can start the server
+  
+
+# OpenSSL Essentials: Working with SSL Certificates, Private Keys and CSRs
+# https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs
+
+
+Source File
+https://www.digitalocean.com/community/tutorials/how-to-create-an-ssl-certificate-on-apache-for-centos-7
+
+1. Install / Enable SSL
+  # openssl is already baked into the Centos OS
+ 
+  # Install Mod SSL, mod_ssl, is an Apache module that provides support for SSL encryption
+  $ sudo yum install mod_ssl
+  
+2. Enable SSL with a passphrase
+
+Drop the -nodes flag
+-nodes: This tells OpenSSL to skip the option to secure our certificate with a passphrase. We need Apache to be able to read the file, without user intervention, when the server starts up. A passphrase would prevent this from happening, since we would have to enter it after every restart.
+
+# First, we need to create a new directory where we will store the server key and certificate:
+$ sudo mkdir /etc/httpd/ssl
+
+
+# We can create the SSL key and certificate files with openssl:
+
+  $ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/httpd/ssl/apache.key -out /etc/httpd/ssl/apache.crt
+  
+  # View PEM encoded certificate
+  $ openssl x509 -in /location/of/cert.pem -text -noout
+
+
+3. Disable the RC4 ciphers
+  # This will show you which ciphers (Cipher Suite) are being used by your server
+  $ openssl ciphers -V
+  # You have to look in the SSLCipherSuite section of the ssl.conf file and add !RC4 to disable !RC4
+  $ /etc/httpd/conf.d/ssl.conf
+
+  
+  4. Find a command line utility that will enable you from your minion to connect to your master to verify the ciphers that you have disabled have actually been disabled 
+      # This is the closest I got to testing if the RC4 ciphers were disabled, I grepped out !RC4, no results means the !RC4 cipher is disabled
+      
+      $ nmap --script ssl-cert,ssl-enum-ciphers -p 443 127.0.0.1 | grep RC4
+
+5. Create a certificate in D.E.R format and try to make it work. Then convert the certificate back to PEM
+  # Source https://www.sslshopper.com/article-most-common-openssl-commands.html
+
+
+  # This is to create the .der form of the certificate
+  $ openssl x509 -outform der -in /location/of/pem/file.crt -out certificate.der
+
+  # View DER encoded Certificate
+  $ openssl x509 -in /location/of/certificate.der -inform der -text -noout
+
+    # This is to convert the .der form of the certificate back to a PEM format
+    $ openssl x509 -inform der -in /location/of/the/derfile.cer -out certificate.pem
+
+
+6.  Once the certificate is back in PEM format take the certificate NOT The private key and install it into the 
+  certificate key store for your computer 
+
+  # This ask is saying have the local browser trust your certificate to where it displays the green keypad
+  # in the browser bar. This can be accomplished by adding your certificate to your local certificate store
+  # on mac OS this can be imported into the keychain database   
+    
+  # copy the certificate from Linux to the Mac
+  $ scp mbills@10.33.0.147:/etc/httpd/ssl/apache* ~/Desktop/
+
+
+
+7. Then using safari visit the page for the web server and ensure that you DON'T get a certificate warning
+  # Safari will accept the certificate, Firefox will also accept the certificate after allowing the exception
+  # Chrome will not accept the self signed certificate from my research. 
+
+
+8. Create a pkcs12 bundle for someone else and distribute it to them
+  # OpenSSL, doesn’t use PKCS#12 as a native format. However it knows how to convert to it.
+  
+  # Concatenate the certificate with the key file and then have OpenSSL convert it to PKCS12
+   $ cat example-key.pem example.crt > example.pem
+
+  # This command will have OpenSSL convert the concatenated file from above to a .PKCS12 file format
+  $ openssl pkcs12 -export -in pkcs12.pem -out pkcs.pkcs12 -name "PKCS"
+  
+  
+9. Have them change their servername to match your certificate and ensure that you can start the server
+  
