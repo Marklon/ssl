@@ -9,6 +9,9 @@
 8. Create a pkcs12 bundle for someone else and distribute it to them
 9. Have them change their servername to match your certificate and ensure that you can start the server
   
+# 21 OpenSSL Examples to Help You in Real-World
+# https://geekflare.com/openssl-commands-certificates/
+
 
 # OpenSSL Essentials: Working with SSL Certificates, Private Keys and CSRs
 # https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs
